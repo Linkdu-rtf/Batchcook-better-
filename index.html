@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BatchCook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f6f4ee;--sf:#fff;--tx:#1f2a24;--mu:#6b7a70;--ac:#2f6b4f;--ac2:#d9503a;--ln:#e0ddd2;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#161c18;--sf:#212a24;--tx:#eef1ec;--mu:#9aa89f;--ac:#6fc29a;--ac2:#f0806c;--ln:#33403a;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#161c18;--sf:#212a24;--tx:#eef1ec;--mu:#9aa89f;--ac:#6fc29a;--ac2:#f0806c;--ln:#33403a;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.4 "Bricolage Grotesque",system-ui,sans-serif}
+#app{max-width:480px;height:100%;margin:auto;display:flex;flex-direction:column;position:relative}
+main{flex:1;overflow-y:auto;padding:16px 16px 90px}
+h1{font-size:28px;font-weight:800;margin:4px 0 14px}h2{font-size:18px;margin:18px 0 8px}
+nav{position:absolute;bottom:0;left:0;right:0;display:flex;background:var(--sf);border-top:1px solid var(--ln)}
+nav button{flex:1;padding:14px 0;border:0;background:none;color:var(--mu);font:600 15px inherit;font-family:inherit}
+nav button.on{color:var(--ac);box-shadow:inset 0 3px var(--ac)}
+.row{display:flex;align-items:center;gap:10px;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.row .g{flex:1}.sub{color:var(--mu);font-size:14px}
+button.p{background:var(--ac);color:var(--bg);border:0;border-radius:10px;padding:12px 16px;font:700 15px inherit;font-family:inherit;width:100%}
+button.s{background:none;border:1px solid var(--ln);color:var(--tx);border-radius:10px;padding:8px 12px;font-family:inherit}
+.fab{position:absolute;right:16px;bottom:72px;width:52px;height:52px;border-radius:50%;background:var(--ac2);color:#fff;border:0;font-size:30px}
+input,select{width:100%;padding:11px;border:1px solid var(--ln);border-radius:10px;background:var(--sf);color:var(--tx);font:inherit;margin-bottom:10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.tag{border:1px solid var(--ln);border-radius:20px;padding:4px 10px;font-size:13px;background:var(--sf);color:var(--tx)}
+.tag.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.meal{background:var(--sf);border:1px solid var(--ln);border-radius:14px;overflow:hidden;text-align:center}
+.meal .im{font-size:44px;padding:14px 0;background:var(--bg);cursor:pointer}
+.meal .t{font-weight:600;padding:6px 8px 0;font-size:14px}
+.plus{display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--mu);min-height:140px;border:2px dashed var(--ln);border-radius:14px;cursor:pointer}
+.st{display:flex;justify-content:center;align-items:center;gap:10px;padding:6px}
+.st b{min-width:60px;font-size:13px}
+.back{background:none;border:0;color:var(--ac);font:700 16px inherit;font-family:inherit;padding:0 0 8px}
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:24px;z-index:5}
+.modal>div{background:var(--sf);border-radius:14px;padding:18px;width:100%}
+pre{white-space:pre-wrap;background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px;font:14px/1.5 inherit}
+.seg{display:flex;gap:6px;margin-bottom:12px}.seg button{flex:1}
+.back{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;margin:0 0 10px;background:var(--sf);border:1px solid var(--ln);border-radius:12px;color:var(--ac);font-weight:700;font-size:16px;font-family:inherit}
+button.s{min-height:44px;min-width:44px;padding:10px 16px;font-weight:600;font-size:15px;background:var(--sf);color:var(--tx)}
+button.p{min-height:48px;font-family:inherit}
+.tag{padding:8px 13px;font-family:inherit;font-size:14px;cursor:pointer;min-height:38px}
+.top{position:sticky;top:0;z-index:3;background:var(--bg);padding:2px 0 8px}
+.top .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+</style></head><body><div id="app"><main id="v"></main>
+<nav><button data-t="clients">Clients</button><button data-t="recettes">Recettes</button><button data-t="agenda">Agenda</button></nav></div>
+<script>
+const CATS=["Viande","Poisson","Fruits de mer","Fruits et légumes","Pâtes, riz, légumineux","Autres"];
+const DIETS=["VEGE","EPICE","MOYEN EPICE","SANS EPICE","SANS PORC","SANS VIANDE","SANS POISSON","SANS FRUITS DE MER","SANS GLUTEN","SANS LACTOSE","SANS OEUF","SANS ARACHIDE","SANS SESAME","SANS SOJA","SANS MOUTARDE","SANS CELERI","PETIT PLAT","MOYEN PLAT","GROS MANGEUR","-500 KCAL/REPAS","-650 KCAL/REPAS","-850 KCAL/REPAS"];
+// Recettes d'exemple : à remplacer par la synchro Google Sheet (voir note dans le chat)
+const R0_old=[
+{id:1,nom:"Poulet curry coco",img:"🍛",cuisson:25,prep:15,portions:4,type:"Plat",tags:["EPICE","SANS PORC"],kcal:520,prot:38,gluc:45,lip:20,notes:"Se congèle très bien.",instr:"Faire revenir le poulet. Ajouter le curry, le lait de coco et le riz. Laisser mijoter 20 min.",ing:[["Poulet",600,"g","Viande"],["Riz basmati",300,"g","Pâtes, riz, légumineux"],["Lait de coco",400,"ml","Autres"],["Oignon",2,"","Fruits et légumes"]]},
+{id:2,nom:"Saumon, quinoa et brocolis",img:"🐟",cuisson:20,prep:10,portions:4,type:"Plat",tags:["SANS GLUTEN","SANS PORC"],kcal:480,prot:35,gluc:30,lip:22,notes:"",instr:"Cuire le quinoa. Rôtir le saumon et les brocolis 15 min à 200°C.",ing:[["Saumon",600,"g","Poisson"],["Quinoa",240,"g","Pâtes, riz, légumineux"],["Brocoli",500,"g","Fruits et légumes"]]},
+{id:3,nom:"Chili sin carne",img:"🌶️",cuisson:40,prep:15,portions:6,type:"Plat",tags:["VEGE","MOYEN EPICE","SANS VIANDE"],kcal:430,prot:20,gluc:55,lip:12,notes:"",instr:"Mijoter haricots rouges, tomates, poivrons et épices 35 min.",ing:[["Haricots rouges",600,"g","Pâtes, riz, légumineux"],["Tomates concassées",800,"g","Fruits et légumes"],["Poivron",3,"","Fruits et légumes"]]},
+{id:4,nom:"Crevettes sautées et nouilles",img:"🦐",cuisson:12,prep:10,portions:2,type:"Plat",tags:["SANS PORC","SANS LACTOSE"],kcal:450,prot:28,gluc:52,lip:14,notes:"",instr:"Sauter les crevettes, ajouter les nouilles et la sauce.",ing:[["Crevettes",300,"g","Fruits de mer"],["Nouilles",200,"g","Pâtes, riz, légumineux"],["Sauce soja",2,"c. à s.","Autres"]]}];
+const SHEET="https://docs.google.com/spreadsheets/d/e/2PACX-1vQYoU73XIqNJJgxdUa27t0Faj_diAtwNqUk29_1CYJIkey1_pN5Rr0shoADn-1gcOV0tJKNwExIHDdn/pub?output=csv";
+const SNAP=`Nom recette,image,temps de cuisson,temps de préparation,nombre de portion,type de recette,tag,liste ingrédient ,quantité par ingrédient,instructions de préparation,notes infos libre,teneur en calorie,valeurs nutritionelles
+Tarte aux pommes,Tarte aux pommes,35 min,20 min,6,-DESSERT,"-VEGE
+-SANS EPICE
+-SANS PORC
+-SANS VIANDE
+-SANS POISSON
+-SANS FRUITS DE MER
+-SANS OEUF
+-PETIT PLAT
+--500 KCAL/REPAS","Pâte brisée
+Pommes (Golden ou Reinette)
+Sucre en poudre
+Sucre vanillé
+Beurre
+Compote de pommes
+Cannelle (facultatif)","1 pâte brisée
+4 pommes (env. 600 g)
+40 g de sucre en poudre
+1 sachet de sucre vanillé
+20 g de beurre
+150 g de compote de pommes
+1 pincée de cannelle","1. Préchauffer le four à 180 °C.
+2. Étaler la pâte brisée dans un moule et piquer le fond.
+3. Étaler la compote sur le fond de tarte.
+4. Couper les pommes en lamelles et les disposer en rosace.
+5. Saupoudrer de sucres et de cannelle, ajouter des noisettes de beurre.
+6. Enfourner 35 minutes.",,"~280 kcal/part 
+~1 680 kcal/total","Par part : Glucides 42 g, Lipides 11 g, Protéines 3 g, Fibres 3 g"
+Spaghetti bolognaise,https://upload.wikimedia.org/wikipedia/commons/4/4d/Tagliatelle_al_rag%C3%B9_%28image_modified%29.jpg,1h,20 min,4,-PLAT COMPLET,"-SANS EPICE
+-SANS PORC
+-SANS POISSON
+-SANS LACTOSE
+-GROS MANGEUR
+--850 KCAL/REPAS","Bouillon
+Sucre en poudre
+Oignon
+Huile
+Carotte
+Tomates
+Persil
+Vin rouge
+Spaghetti
+Ail
+Céleri
+Bœuf haché","50 cl de bouillon
+1 cuillère à café de sucre
+1 oignon
+2 cuillères à soupe d'huile
+1 carotte
+850 g de tomates
+Persil
+38 ml de vin rouge
+500 g de spaghetti
+2 gousses d'ail
+1 branche de céleri
+500 g de bœuf haché","1. Hacher l'ail et l'oignon, couper la carotte et le céleri en dés.
+2. Les faire revenir dans l'huile 5 min.
+3. Ajouter le bœuf haché et le faire brunir.
+4. Ajouter bouillon, vin, tomates, sucre et persil. Porter à ébullition.
+5. Mijoter à couvert 1h à 1h30.
+6. Cuire les spaghetti et ajouter la sauce.","Variante : nids de spaghetti au parmesan, cuits 15 min à 180 °C.","~680 kcal/part
+~2 720 kcal/total","Par part : Glucides 96 g, Lipides 16 g, Protéines 36 g, Fibres 7 g"
+Tartiflette,https://upload.wikimedia.org/wikipedia/commons/3/36/Tartiflette.jpg,20 min,20 min,4,-PLAT COMPLET,"-SANS EPICE
+-SANS POISSON
+-SANS GLUTEN
+-SANS OEUF
+-GROS MANGEUR
+--850 KCAL/REPAS","Pommes de terre
+Lardons
+Oignon
+Vin blanc de Savoie (facultatif)
+Reblochon
+Sel
+Poivre","1 kg de pommes de terre
+250 g de lardons
+100 g d'oignons
+25 cl de vin blanc de Savoie (facultatif)
+500 g de reblochon
+Sel
+Poivre","1. Préchauffer le four à 160 °C.
+2. Cuire les pommes de terre.
+3. Émincer les oignons, trancher le reblochon.
+4. Faire revenir lardons et oignons.
+5. Éplucher et trancher les pommes de terre.
+6. Monter le plat en couches, reblochon croûte vers le haut.
+7. Enfourner 20 minutes.","Astuce : ajouter ail, échalotes ou crème fraîche.","~840 kcal/part
+~3 360 kcal/total","Par part : Glucides 46 g, Lipides 54 g, Protéines 38 g, Fibres 5 g"`;
+function csv(t){const o=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const h=t[i];if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=h}else if(h=='"')q=true;else if(h==',')r.push(c),c="";else if(h=='\n'){r.push(c);o.push(r);r=[];c=""}else if(h!='\r')c+=h}r.push(c);o.push(r);return o}
+function catg(n){n=n.toLowerCase();if(/bœuf|boeuf|lardon|poulet|porc|jambon|veau|agneau|dinde|saucisse|steak|canard/.test(n))return CATS[0];if(/saumon|cabillaud|thon|poisson|colin|truite/.test(n))return CATS[1];if(/crevette|moule|calamar|coquille|gambas/.test(n))return CATS[2];if(/pâte(?! brisée)|spaghetti|riz|lentille|pois chiche|haricot|quinoa|semoule|nouille|boulgour|tagliatelle|penne/.test(n))return CATS[4];if(/pomme|poire|banane|citron|orange|oignon|carotte|tomate|persil|\bail\b|céleri|courgette|poivron|champignon|salade|épinard|brocoli|échalote|compote/.test(n))return CATS[3];return CATS[5]}
+const nz=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim();
+function matchCat(s){const x=nz(s);return x?CATS.find(c=>nz(c)==x||nz(c).startsWith(x)):null}
+function mins(s){s=s||"";const h=/(\d+)\s*h\s*(\d+)?/.exec(s);if(h)return +h[1]*60+(+h[2]||0);const m=/(\d+)/.exec(s);return m?+m[1]:0}
+function parse(t){const R=csv(t),hc=R[0].findIndex((h,i)=>i>8&&/type.*ingr/i.test(h));return R.slice(1).filter(r=>r[0]&&r[0].trim()).map((r,i)=>{
+ const cats=hc>=0?(r[hc]||"").split("\n").filter(Boolean):[];const nm=(r[7]||"").split("\n").filter(Boolean),ln=(r[8]||"").split("\n").filter(Boolean);
+ const ing=nm.map((n,k)=>{const line=(ln[k]||n).trim(),m=/^(\d+(?:[.,]\d+)?)(?:\s*(kg|g|cl|ml|l|cuillères? à soupe|cuillères? à café|gousses?|sachets?|pincée|branches?)(?=\s|$))?/i.exec(line);const clean=n.replace(/\s*\(.*\)/,"").trim();return [clean,m?parseFloat(m[1].replace(",",".")):0,m&&m[2]||"",(cats[k]&&matchCat(cats[k]))||catg(clean),line]});
+ const g=(re)=>{const m=re.exec(r[12]||"");return m?+m[1]:0};
+ const type=(r[5]||"").replace(/^-/,"");
+ return {id:i+1,nom:r[0].trim(),img:{DESSERT:"🥧","PLAT COMPLET":"🍝",PLAT:"🍽️",SALADE:"🥗",POTAGE:"🍲",BOISSON:"🥤"}[type]||"🍽️",photo:/^http/.test(r[1])?r[1]:"",cuisson:mins(r[2]),prep:mins(r[3]),portions:parseInt(r[4])||1,type,tags:(r[6]||"").split("\n").filter(Boolean).map(x=>x.replace(/^-/,"")),ing,instr:r[9]||"",notes:r[10]||"",kcal:+((/(\d[\d\s]*)\s*kcal\/part/.exec(r[11]||"")||[0,0])[1].toString().replace(/\s/g,"")),kcalTxt:(r[11]||"").replace(/\n/g," · "),nut:r[12]||"",prot:g(/Prot[ée]ines\s*(\d+)/),gluc:g(/Glucides\s*(\d+)/),lip:g(/Lipides\s*(\d+)/)}})}
+const R0=parse(SNAP);
+const ph=(r,w,h)=>r.photo?`<img src="${r.photo}" alt="" style="width:${w};height:${h};object-fit:cover;border-radius:8px;display:block" onerror="this.replaceWith(document.createTextNode('${r.img}'))">`:r.img;
+async function sync(b){try{b.textContent="Synchronisation…";const t=await (await fetch(SHEET)).text();const n=parse(t);if(!n.length)throw 0;recettes=n;b.textContent="À jour ("+n.length+" recettes)";fr()}catch(e){b.textContent="Synchro impossible ici (elle fonctionnera dans l'APK)"}}
+const S=(k,d)=>{try{const x=localStorage.getItem(k);return x?JSON.parse(x):d}catch(e){return d}};
+const W=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const TODAY=new Date().toISOString().slice(0,10);
+let recettes=R0,
+clients=S("clients",null)||[{id:1,nom:"Gérard",foyer:4,rdvs:["2027-01-15"],tags:["HALAL"],plats:[{r:1,p:4},{r:2,p:2}],hist:[{r:3,d:"2026-11-08"},{r:1,d:"2026-11-01"}]}];
+clients.forEach(c=>{if(!c.rdvs)c.rdvs=c.rdv?[c.rdv]:[];delete c.rdv;c.rdvs=c.rdvs.map((x,i)=>typeof x=="string"?{d:x,plats:i==0&&c.plats?c.plats:[]}:x);delete c.plats});
+let tab="clients",scr=null,filt="actif",stack=[],fq="",fsel=[],fall=true,fopen=false,FT=[],nf={};
+const $=s=>document.querySelector(s),v=$("#v");
+const save=()=>W("clients",clients);
+const nxt=c=>c.rdvs.map(x=>x.d).filter(d=>d>=TODAY).sort()[0];
+const fd=d=>d?new Date(d+"T12:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short",year:"numeric"}):"";
+const q=n=>Math.round(n*10)/10;
+const rec=id=>recettes.find(r=>r.id==id);
+const cl=id=>clients.find(c=>c.id==id);
+const BK='<button class="back" onclick="back()">‹ Retour</button>';
+// Navigation avec pile : le bouton Retour revient toujours à l'écran précédent
+function nav(s){stack.push({tab,scr});scr=s;render()}
+function back(){const p=stack.pop();if(p){tab=p.tab;scr=p.scr}else scr=null;render()}
+function go(t){if(t=="recettes"){fsel=[];fq=""}tab=t;scr=null;stack=[];render()}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>go(b.dataset.t));
+function render(){
+ document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t==tab));
+ const s=scr||{};({clients:vClients,recettes:vRec,agenda:vAgenda,client:vClient,recette:vRecette,courses:vCourses,rdv:vRdv,histo:vHisto,nouveau:vNew,choix:vChoix}[s.n||tab])(s);v.scrollTop=0}
+// ---------- Clients ----------
+function vClients(){
+ const act=clients.filter(c=>nxt(c)),ina=clients.filter(c=>!nxt(c));
+ const l=(filt=="actif"?act:ina).sort((a,b)=>(nxt(a)||"9").localeCompare(nxt(b)||"9")||a.nom.localeCompare(b.nom));
+ const on=f=>filt==f?"border-color:var(--ac);color:var(--ac);border-width:2px":"";
+ v.innerHTML=`<h1>Clients</h1><div class="seg"><button class="s" style="${on("actif")}" onclick="filt='actif';render()">Actifs (${act.length})</button><button class="s" style="${on("inactif")}" onclick="filt='inactif';render()">Inactifs (${ina.length})</button></div>`+
+ (l.map(c=>`<div class="row" onclick="nav({n:'client',id:${c.id}})"><div class="g"><b>${c.nom}</b><div class="sub">${nxt(c)?"Prochain RDV : "+fd(nxt(c)):"Aucun rendez-vous prévu"}</div></div><span>›</span></div>`).join("")||`<p class="sub">Aucun client ${filt}.</p>`)+
+ `<button class="fab" aria-label="Ajouter un client" onclick="newClient()">+</button>`}
+const platsOf=(c,d)=>(c.rdvs.find(x=>x.d==d)||{plats:[]}).plats;
+function totals(pl){let k=0,p=0,g=0,l=0;pl.forEach(x=>{const r=rec(x.r);if(!r)return;k+=r.kcal*x.p;p+=r.prot*x.p;g+=r.gluc*x.p;l+=r.lip*x.p});return{k,p,g,l}}
+function histo(c){const lim=new Date(Date.now()-35*864e5).toISOString().slice(0,10);
+ return c.hist.concat(...c.rdvs.filter(x=>x.d<TODAY).map(x=>x.plats.map(p=>({r:p.r,d:x.d})))).filter(h=>h.d>=lim).sort((a,b)=>b.d.localeCompare(a.d))}
+const ctags=c=>`<div class="tags">${c.tags.map(x=>`<span class="tag on">${x}</span>`).join("")}</div>`;
+function vClient(s){
+ const c=cl(s.id),rd=c.rdvs.slice().sort((a,b)=>a.d.localeCompare(b.d));
+ v.innerHTML=`${BK}<h1>${c.nom}</h1><div class="sub">${c.foyer} pers. dans le foyer · ${nxt(c)?"Actif":"Inactif (aucun RDV prévu)"}</div>${ctags(c)}
+ <h2>Rendez-vous et menus</h2>`+(rd.map(x=>`<div class="row" style="${x.d<TODAY?"opacity:.55":""}" onclick="nav({n:'rdv',id:${c.id},d:'${x.d}'})"><div class="g"><b>${fd(x.d)}</b><div class="sub">${x.plats.length} plat(s)${x.d<TODAY?" · passé":""}</div></div><button class="s" aria-label="Supprimer" onclick="event.stopPropagation();delRdv(${c.id},'${x.d}')">✕</button><span>›</span></div>`).join("")||'<p class="sub">Aucun rendez-vous. Ajoutez-en un pour créer son menu.</p>')+
+ `<div style="display:flex;gap:8px"><input type="date" id="nd" style="margin:0"><button class="p" style="width:auto;white-space:nowrap" onclick="addRdv(${c.id})">+ RDV</button></div>
+ <button class="s" style="margin-top:18px;width:100%" onclick="nav({n:'histo',id:${c.id}})">Historique (5 semaines)</button>
+ <div style="display:flex;gap:8px;margin-top:8px"><button class="s" style="flex:1" onclick="editClient(${c.id})">Modifier le client</button><button class="s" style="flex:1;color:var(--ac2);border-color:var(--ac2)" onclick="supClient(${c.id})">Supprimer</button></div>`}
+function addRdv(id){const d=$("#nd").value;if(!d)return;const c=cl(id);if(!c.rdvs.some(x=>x.d==d))c.rdvs.push({d,plats:[]});save();vClient({id})}
+function delRdv(id,d){modal(`Supprimer le rendez-vous du ${fd(d)} et son menu ?`,()=>{const c=cl(id);c.rdvs=c.rdvs.filter(x=>x.d!=d);save();vClient({id})})}
+function vRdv(s){
+ const c=cl(s.id),pl=platsOf(c,s.d),t=totals(pl),a=`${c.id},'${s.d}'`;
+ v.innerHTML=`${BK}<h1>Menu du ${fd(s.d)}</h1><div class="sub">${c.nom} · ${c.foyer} pers. dans le foyer</div>${ctags(c)}
+ <h2>Repas</h2><div class="grid">`+
+ pl.map((x,i)=>{const r=rec(x.r);return `<div class="meal"><div class="im" onclick="nav({n:'recette',id:${r.id}})">${ph(r,'100%','110px')}</div><div class="t">${r.nom}</div>
+ <div class="st"><button class="s" aria-label="Moins" onclick="pers(${a},${i},-1)">−</button><b>${x.p} pers.</b><button class="s" aria-label="Plus" onclick="pers(${a},${i},1)">+</button></div>
+ <div class="sub">${r.kcal*x.p} kcal</div><div style="display:flex;gap:6px;margin:6px 8px 10px"><button class="s" style="flex:1;padding:8px" onclick="nav({n:'choix',id:${c.id},d:'${s.d}',rep:${i}})">Changer</button><button class="s" style="padding:8px" aria-label="Retirer" onclick="rmPlat(${a},${i})">✕</button></div></div>`}).join("")+
+ `<div class="plus" onclick="nav({n:'choix',id:${c.id},d:'${s.d}',rep:-1})">+</div></div>
+ <h2>Total</h2><div class="sub">${t.k} kcal · Protéines ${t.p} g · Glucides ${t.g} g · Lipides ${t.l} g</div>
+ <button class="p" style="margin-top:16px" onclick="nav({n:'courses',id:${c.id},d:'${s.d}'})">Liste de courses</button>`}
+function pers(id,d,i,k){const pl=platsOf(cl(id),d);pl[i].p=Math.max(1,pl[i].p+k);save();const y=v.scrollTop;vRdv({id,d});v.scrollTop=y}
+function rmPlat(id,d,i){platsOf(cl(id),d).splice(i,1);save();vRdv({id,d})}
+function vChoix(s){
+ v.innerHTML=`${BK}<h1>Choisir un plat</h1>`+recettes.map(r=>`<div class="row" onclick="pick(${s.id},'${s.d}',${r.id},${s.rep})"><span style="font-size:28px;width:48px;flex:none">${ph(r,'48px','48px')}</span><div class="g"><b>${r.nom}</b><div class="sub">${r.kcal} kcal</div></div></div>`).join("")}
+function pick(id,d,rid,rep){
+ const c=cl(id),pl=platsOf(c,d),ok=()=>{const e={r:rid,p:c.foyer};rep>=0?pl[rep]=e:pl.push(e);save();back()};
+ if(histo(c).some(h=>h.r==rid))modal(`<b>${rec(rid).nom}</b> figure déjà dans l'historique de ${c.nom} (5 dernières semaines). L'ajouter quand même ?`,ok);else ok()}
+function modal(msg,yes){const m=document.createElement("div");m.className="modal";m.innerHTML=`<div><p>${msg}</p><div style="display:flex;gap:8px"><button class="s" style="flex:1" id="n">Annuler</button><button class="p" style="flex:1" id="y">Confirmer</button></div></div>`;$("#app").append(m);m.querySelector("#n").onclick=()=>m.remove();m.querySelector("#y").onclick=()=>{m.remove();yes()}}
+function liste(c,d){
+ const m={};platsOf(c,d).forEach(x=>{const r=rec(x.r);r.ing.forEach(([n,qt,u,cat])=>{const k=cat+"|"+n+"|"+u;m[k]=(m[k]||0)+qt*x.p/r.portions})});
+ let out=`Liste de courses – ${c.nom} – ${fd(d)}\n`;
+ CATS.forEach(cat=>{const it=Object.entries(m).filter(([k])=>k.startsWith(cat+"|"));if(it.length)out+=`\n${cat}\n`+it.map(([k,qt])=>{const[,n,u]=k.split("|");return qt?`- ${n} : ${q(qt)}${u?" "+u:""}`:`- ${n}`}).join("\n")+"\n"});
+ return out}
+async function partager(t,name){
+ try{const f=new File([t],name,{type:"text/plain"});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:name});return}
+  if(navigator.share){await navigator.share({title:name,text:t});return}}catch(e){if(e&&e.name=="AbortError")return}
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/plain"}));a.download=name;a.click()}
+function vCourses(s){
+ const c=cl(s.id),t=liste(c,s.d),nm=`courses_${c.nom}_${s.d}.txt`;
+ v.innerHTML=`${BK}<h1>Courses</h1><pre>${t}</pre><div style="display:grid;gap:8px"><button class="p" id="sh">Envoyer / partager (.txt)</button><button class="s" id="cp">Copier le texte</button></div>`;
+ $("#sh").onclick=()=>partager(t,nm);
+ $("#cp").onclick=()=>{try{navigator.clipboard.writeText(t);$("#cp").textContent="Copié ✓"}catch(e){}}}
+function vHisto(s){
+ const c=cl(s.id),h=histo(c);
+ v.innerHTML=`${BK}<h1>Historique</h1><div class="sub" style="margin-bottom:8px">${c.nom} · 5 dernières semaines</div>`+(h.map(x=>{const r=rec(x.r);return `<div class="row" style="cursor:default"><span style="font-size:28px;width:48px;flex:none">${ph(r,'48px','48px')}</span><div class="g"><b>${r.nom}</b><div class="sub">${fd(x.d)}</div></div></div>`}).join("")||'<p class="sub">Aucun repas sur cette période.</p>')}
+// ---------- Nouveau client ----------
+function newClient(){nf={nom:"",foyer:2,dt:"",tags:[],extra:[]};nav({n:'nouveau'})}
+function editClient(id){const c=cl(id);nf={id,nom:c.nom,foyer:c.foyer,dt:"",tags:c.tags.slice(),extra:c.tags.filter(t=>!DIETS.includes(t))};nav({n:'nouveau'})}
+function supClient(id){const c=cl(id);modal(`Supprimer <b>${c.nom}</b> avec tous ses rendez-vous et menus ? Cette action est définitive.`,()=>{clients=clients.filter(x=>x.id!=id);save();go("clients")})}
+function vNew(){
+ const all=DIETS.concat(nf.extra);
+ v.innerHTML=`${BK}<h1>${nf.id?"Modifier le client":"Nouveau client"}</h1>
+ <label>Nom</label><input id="nm" value="${nf.nom}" oninput="nf.nom=this.value">
+ <label>Personnes dans le foyer : <b id="fv">${nf.foyer}</b></label><input type="range" min="1" max="10" value="${nf.foyer}" oninput="nf.foyer=+this.value;fv.textContent=this.value">
+ ${nf.id?"":`<label>Prochain rendez-vous (facultatif)</label><input type="date" value="${nf.dt}" oninput="nf.dt=this.value">`}
+ <label>Régimes alimentaires</label><div class="tags">${all.map((d,i)=>`<button class="tag ${nf.tags.includes(d)?"on":""}" onclick="tg(${i})">${d}</button>`).join("")}</div>
+ <div style="display:flex;gap:8px"><input id="xd" placeholder="Autre régime ou allergie" style="margin:0"><button class="s" onclick="addD()">+ Ajouter</button></div>
+ <button class="p" style="margin-top:16px" onclick="mk()">${nf.id?"Enregistrer":"Créer le client"}</button>`}
+function tg(i){const d=DIETS.concat(nf.extra)[i],t=nf.tags;t.includes(d)?t.splice(t.indexOf(d),1):t.push(d);const y=v.scrollTop;vNew();v.scrollTop=y}
+function addD(){const d=$("#xd").value.trim().toUpperCase();if(!d)return;if(!DIETS.concat(nf.extra).includes(d))nf.extra.push(d);if(!nf.tags.includes(d))nf.tags.push(d);const y=v.scrollTop;vNew();v.scrollTop=y}
+function mk(){if(!nf.nom.trim()){$("#nm").focus();return}if(nf.id){const c=cl(nf.id);c.nom=nf.nom.trim();c.foyer=nf.foyer;c.tags=nf.tags;save();back();return}clients.push({id:Date.now(),nom:nf.nom.trim(),foyer:nf.foyer,rdvs:nf.dt?[{d:nf.dt,plats:[]}]:[],tags:nf.tags,hist:[]});save();go("clients")}
+// ---------- Recettes ----------
+function vRec(){
+ v.innerHTML=(stack.length?BK:"")+`<div class="top"><div class="hd"><h1 style="margin:0">Recettes</h1><button class="p" style="width:auto" id="sy" onclick="sync(this)">↻ Actualiser</button></div>
+ <input id="sq" style="margin:0" placeholder="Rechercher : nom, ingrédient, type…" value="${fq}" oninput="fq=this.value;fr()" onfocus="if(!fopen){fopen=true;drawF()}"></div>
+ <div id="fp"></div><div class="sub" id="cn" style="margin:4px 0 8px"></div><div id="rl"></div>`;drawF();fr()}
+function drawF(){const el=$("#fp");if(!el)return;
+ FT=[...new Set(recettes.map(r=>r.type).filter(Boolean).concat(...recettes.map(r=>r.tags)))];
+ el.innerHTML=`<div style="display:flex;gap:8px;margin:8px 0"><button class="s" style="flex:1" onclick="fopen=!fopen;drawF()">Filtrer par tags${fsel.length?" ("+fsel.length+")":""} ${fopen?"▲":"▼"}</button>${fsel.length>1?`<button class="s" onclick="fall=!fall;drawF();fr()">${fall?"ET":"OU"}</button>`:""}${fsel.length?`<button class="s" onclick="fsel=[];drawF();fr()">Effacer</button>`:""}</div>`+(fopen?`<div class="tags">${FT.map((t,i)=>`<button class="tag ${fsel.includes(t)?"on":""}" onclick="ft(${i})">${t}</button>`).join("")}</div>`:"")}
+function ft(i){const t=FT[i];fsel.includes(t)?fsel.splice(fsel.indexOf(t),1):fsel.push(t);drawF();fr()}
+function fr(){
+ const k=fq.toLowerCase().split(/\s*,\s*|\s+ou\s+/).filter(Boolean);
+ const L=recettes.filter(r=>{const lab=r.tags.concat(r.type);
+  const okT=!fsel.length||(fall?fsel.every(t=>lab.includes(t)):fsel.some(t=>lab.includes(t)));
+  const hay=[r.nom,r.type,...r.tags,...r.ing.map(i=>i[0])].join(" ").toLowerCase();
+  return okT&&(!k.length||k.some(w=>hay.includes(w)))});
+ $("#cn").textContent=L.length+" recette"+(L.length>1?"s":"");
+ $("#rl").innerHTML=L.map(r=>`<div class="row" onclick="nav({n:'recette',id:${r.id}})"><span style="font-size:28px;width:48px;flex:none">${ph(r,'48px','48px')}</span><div class="g"><b>${r.nom}</b><div class="sub">${r.type} · ${r.prep+r.cuisson} min · ${r.tags.slice(0,3).join(", ")}</div></div><span>›</span></div>`).join("")}
+function tj(id,i){const r=rec(id),t=[r.type].concat(r.tags)[i];stack.push({tab,scr});tab="recettes";scr=null;fsel=[t];fall=true;fq="";fopen=true;render()}
+function vRecette(s){const r=rec(s.id);
+ v.innerHTML=`${BK}${r.photo?`<img src="${r.photo}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:12px" onerror="this.remove()">`:`<div style="font-size:64px">${r.img}</div>`}<h1>${r.nom}</h1>
+ <div class="sub">Préparation ${r.prep} min · Cuisson ${r.cuisson} min · ${r.portions} portions</div>
+ <div class="tags">${[r.type].concat(r.tags).map((t,i)=>`<button class="tag" onclick="tj(${r.id},${i})">${t}</button>`).join("")}</div>
+ <h2>Ingrédients</h2>${r.ing.map(i=>`<div>${i[4]}</div>`).join("")}
+ <h2>Instructions</h2><p>${r.instr.replace(/\n/g,"<br>")}</p>
+ <h2>Nutrition</h2><div>${r.kcalTxt}<br>${r.nut}</div>
+ ${r.notes?`<h2>Notes</h2><p>${r.notes}</p>`:""}`}
+async function sync(b){const lb=b.textContent;try{b.textContent="Synchronisation…";const n=parse(await (await fetch(SHEET)).text());if(!n.length)throw 0;recettes=n;b.textContent="✓ À jour ("+n.length+")";if(tab=="recettes"&&!scr&&$("#sq")){drawF();fr()}}catch(e){b.textContent="Synchro impossible (connexion ?)"}setTimeout(()=>{b.textContent="↻ Actualiser"},2500)}
+// ---------- Agenda ----------
+function vAgenda(){
+ const l=[];clients.forEach(c=>c.rdvs.forEach(x=>l.push({d:x.d,n:x.plats.length,c})));l.sort((a,b)=>a.d.localeCompare(b.d));
+ const row=x=>`<div class="row" style="${x.d<TODAY?"opacity:.55":""}" onclick="nav({n:'rdv',id:${x.c.id},d:'${x.d}'})"><div class="g"><b>${fd(x.d)}</b><div class="sub">${x.c.nom} · ${x.n} plat(s)</div></div><span>›</span></div>`;
+ const up=l.filter(x=>x.d>=TODAY),pa=l.filter(x=>x.d<TODAY).reverse();
+ v.innerHTML=`<h1>Agenda</h1><h2>À venir</h2>`+(up.map(row).join("")||'<p class="sub">Aucun rendez-vous prévu.</p>')+(pa.length?`<h2>Passés</h2>`+pa.map(row).join(""):"")}
+render();sync(document.createElement("button"));
+</script></body></html>

@@ -1,0 +1,2 @@
+{"appId":"fr.batchcook.app","appName":"BatchCook","webDir":"www",
+"plugins":{"CapacitorHttp":{"enabled":true}}}
